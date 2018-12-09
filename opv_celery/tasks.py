@@ -18,8 +18,8 @@ import time
 import socket
 import logging
 
-from celery import Celery, group
-from celery.exceptions import TaskError
+from celery import Celery, group, states
+
 
 from opv_api_client import RestClient
 from opv_tasks.utils import find_task
@@ -33,6 +33,10 @@ app = Celery()
 app.config_from_envvar('CELERY_CONFIG_MODULE')
 
 
+class MyException(Exception):
+     pass
+
+
 class MyLittleLogger:
 
     def __init__(self, name):
@@ -43,13 +47,15 @@ class MyLittleLogger:
         """
         self.logger = logging.getLogger(name)
         try:
-            self.filename = "%s-%s.log" % (name, int(time.time() * 1000))
+            self.filename = "%s-%s.txt" % (name, int(time.time() * 1000))
             self.file_path = os.path.join(app.conf["opv_log_dir"], self.filename)
             formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s [%(lineno)d]')
-            fh = logging.FileHandler(self.filename)
+            fh = logging.FileHandler(self.file_path)
+            fh.setLevel(logging.INFO)
             self.handler = fh.setFormatter(formatter)
             self.logger.addHandler(fh)
         except Exception:
+            logging.exception("Can't create MyLittleLogger")
             pass
 
     def remove(self):
@@ -93,9 +99,9 @@ def run(dm_c, db_c, task_name, inputData, logger=None):
 
     return task.run(options=inputData)
 
-@app.task
+@app.task()
 def this_is_a_test(ok):
-    logger_class = MyLittleLogger("This is a test %s" % ok)
+    logger_class = MyLittleLogger("This_is_a_test_%s" % ok)
 
     if ok:
         logger_class.logger.info("This is ok")
@@ -103,10 +109,10 @@ def this_is_a_test(ok):
         return "Is ok"
     else:
         logger_class.logger.error("This is an error")
-        raise TaskError("Error see more at: %s" % logger_class.url)
+        raise MyException("Error %s" % logger_class.url)
 
 
-@app.task
+@app.task()
 def make_all(options):
 
     logger_class = MyLittleLogger("make_all_%s_%s" % (options["id_lot"], options["id_malette"]))
@@ -134,7 +140,7 @@ def make_all(options):
     except Exception as e:
         msg = "Error lot=%s malette=%s msg='%s'" % (options["id_lot"], options["id_malette"], str(e))
         logger_class.logger.error(msg)
-        raise TaskError("Error %s" % logger_class.url)
+        raise MyException("Error %s" % logger_class.url)
 
 
 if __name__ == "__main__":
