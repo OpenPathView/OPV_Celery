@@ -40,7 +40,6 @@ setup(
         ]
     },
     scripts=[],
-
     license="GPL3",
 )
 

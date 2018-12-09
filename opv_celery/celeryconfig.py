@@ -19,3 +19,8 @@ result_backend = 'redis://OPV_Master:6379/1'
 task_serializer = 'json'
 result_serializer = 'json'
 accept_content = ['json']
+
+opv_log_dir = '/home/opv/logs/celery'
+opv_log_use_ip = True
+opv_log_port = 80
+opv_log_path = '/celery'

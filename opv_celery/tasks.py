@@ -13,12 +13,22 @@
 # You should have received a copy of the GNU General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from celery import Celery
+import os
+import time
+import socket
+import logging
+
+from celery import Celery, group
+from celery.exceptions import TaskError
 
 import os
 from opv_api_client import RestClient
-from opv_tasks.__main__ import run
+from opv_tasks.utils import find_task
 from opv_directorymanagerclient import DirectoryManagerClient, Protocol
+
+
+from opv_celery.__main__ import get_campagain_by_id, found_no_make_lot
+
 
 #: Set default configuration module name
 os.environ.setdefault('CELERY_CONFIG_MODULE', 'opv_celery.celeryconfig')
@@ -26,8 +36,98 @@ os.environ.setdefault('CELERY_CONFIG_MODULE', 'opv_celery.celeryconfig')
 app = Celery()
 app.config_from_envvar('CELERY_CONFIG_MODULE')
 
+
+class MyLittleLogger:
+
+    def __init__(self, name):
+        """
+        Make a logger
+        :param name: The name of the logger
+        :return: logger, path to log file, the url to the log file
+        """
+        self.logger = logging.getLogger(name)
+        try:
+            self.filename = "%s-%s.log" % (name, int(time.time() * 1000))
+            self.file_path = os.path.join(app.conf["opv_log_dir"], self.filename)
+            formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s [%(lineno)d]')
+            fh = logging.FileHandler(self.filename)
+            self.handler = fh.setFormatter(formatter)
+            self.logger.addHandler(fh)
+        except Exception:
+            pass
+
+    def remove(self):
+        """Remove the log file"""
+        try:
+            self.handler.close()
+            self.logger.removeHandler(self.handler)
+            os.remove(self.file_path)
+        except Exception:
+            pass
+
+    @property
+    def hostname(self):
+        """Get the hostname"""
+        host = socket.gethostname()
+        return socket.gethostbyname(host) if app.conf["opv_log_use_ip"] else host
+
+    @property
+    def url(self):
+        try:
+            return "http://%s:%s%s/%s" % (
+                self.hostname, app.conf["opv_log_port"], app.conf["opv_log_path"], self.filename
+            )
+        except Exception:
+            return "Generic Error"
+
+
+def run(dm_c, db_c, task_name, inputData, logger=None):
+    """
+    Run task.
+    Return a TaskReturn.
+    """
+    Task = find_task(task_name)
+    if not Task:
+        raise Exception('Task %s not found' % task_name)
+
+    task = Task(client_requestor=db_c, opv_directorymanager_client=dm_c)
+    if logger:
+        task.logger = logger
+        task.shell_logger = logger
+
+    return task.run(options=inputData)
+
+
+@app.task
+def test(campaign_id, id_malette):
+    """
+    Launch makeall tast on each lot
+    :param options:
+    :return:
+    """
+
+    campaign = get_campagain_by_id(campaign_id, id_malette)
+
+    return found_no_make_lot(campaign.lots)
+
+
+@app.task
+def this_is_a_test(ok):
+    logger_class = MyLittleLogger("This is a test %s" % ok)
+
+    if ok:
+        logger_class.logger.info("This is ok")
+        logger_class.remove()
+        return "Is ok"
+    else:
+        logger_class.logger.error("This is an error")
+        raise TaskError("Error see more at: %s" % logger_class.url)
+
+
 @app.task
 def make_all(options):
+
+    logger_class = MyLittleLogger("make_all_%s_%s" % (options["id_lot"], options["id_malette"]))
 
     # Get the address to Directory Manager
     # Variable.setdefault("OPV-DM", "http://OPV_Master:5005")
@@ -46,11 +146,13 @@ def make_all(options):
     db_client = RestClient(opv_api)
 
     try:
-        run(dir_manager_client, db_client, "makeall", options)
-        return "Success for lot %s for malette %s" % (options["id_lot"], options["id_malette"])
+        run(dir_manager_client, db_client, "makeall", options, logger_class.logger)
+        logger_class.remove()
+        return "Success lot=%s malette=%s" % (options["id_lot"], options["id_malette"])
     except Exception as e:
-        print(str(e))
-        return "Error for lot %s for malette %s" % (options["id_lot"], options["id_malette"])
+        msg = "Error lot=%s malette=%s msg='%s'" % (options["id_lot"], options["id_malette"], str(e))
+        logger_class.logger.error(msg)
+        raise TaskError("Error %s" % logger_class.url)
 
 
 if __name__ == "__main__":
