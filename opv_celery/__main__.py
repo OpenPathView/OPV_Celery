@@ -26,7 +26,7 @@ from opv_api_client.ressources import Campaign
 from opv_tasks.__main__ import run
 from opv_directorymanagerclient import DirectoryManagerClient, Protocol
 
-from opv_celery.tasks import app, make_all
+from opv_celery.tasks import make_all
 
 
 def get_campagain_by_id(campaign_id, id_malette):
