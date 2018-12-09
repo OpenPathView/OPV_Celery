@@ -21,13 +21,9 @@ import logging
 from celery import Celery, group
 from celery.exceptions import TaskError
 
-import os
 from opv_api_client import RestClient
 from opv_tasks.utils import find_task
 from opv_directorymanagerclient import DirectoryManagerClient, Protocol
-
-
-from opv_celery.__main__ import get_campagain_by_id, found_no_make_lot
 
 
 #: Set default configuration module name
@@ -96,20 +92,6 @@ def run(dm_c, db_c, task_name, inputData, logger=None):
         task.shell_logger = logger
 
     return task.run(options=inputData)
-
-
-@app.task
-def test(campaign_id, id_malette):
-    """
-    Launch makeall tast on each lot
-    :param options:
-    :return:
-    """
-
-    campaign = get_campagain_by_id(campaign_id, id_malette)
-
-    return found_no_make_lot(campaign.lots)
-
 
 @app.task
 def this_is_a_test(ok):
