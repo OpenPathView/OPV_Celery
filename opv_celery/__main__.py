@@ -110,14 +110,7 @@ def is_usable_lot(lot, malette_id, client_requestor):
             break
     return pano is None
 
-
-def main():
-    campaign_id = 1
-    id_malette = 42
-    if len(sys.argv) >= 3:
-        campaign_id = int(sys.argv[1])
-        id_malette = int(sys.argv[2])
- 
+def launch(campaign_id, id_malette):
     campaign = get_campagain_by_id(campaign_id, id_malette)
     
     results = found_no_make_lot(campaign.lots)
@@ -125,3 +118,12 @@ def main():
     print("%s panorama to make: %s" % (len(results), results))
     for lot in results:
         make_all.delay(lot)
+
+def main():
+    campaign_id = 1
+    id_malette = 42
+    if len(sys.argv) >= 3:
+        campaign_id = int(sys.argv[1])
+        id_malette = int(sys.argv[2])
+
+    launch(campaign_id, id_malette)
