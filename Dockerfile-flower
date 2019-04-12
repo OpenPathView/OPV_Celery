@@ -1,0 +1,15 @@
+FROM opv-celery
+
+ENV CELERY_BROKER redis://redis:6379/0
+ENV FLOWER_PORT 5555
+
+COPY . /source/OPV_Tasks
+
+WORKDIR /source/OPV_Tasks
+
+RUN pip3 install celery flower redis
+
+EXPOSE ${FLOWER_PORT}:${FLOWER_PORT}
+
+CMD ["/bin/bash", "-c", "/usr/local/bin/celery flower -A opv_celery.tasks.app --address=0.0.0.0 --port=${FLOWER_PORT} --broker=${CELERY_BROKER}"] 
+

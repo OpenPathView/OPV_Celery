@@ -13,8 +13,19 @@
 # You should have received a copy of the GNU General Public License along
 # with this program. If not, see <http://www.gnu.org/licenses/>.
 
-broker_url = 'redis://OPV_Master:6379/0'
-result_backend = 'redis://OPV_Master:6379/1'
+import os
+
+broker_url = "redis://{}:{}/{}".format(
+	os.getenv("CELERY_BROKER_URL", "opv_master"),
+	int(os.getenv("CELERY_BROKER_PORT", 6379)),
+	int(os.getenv("CELERY_BROKER_DB", 0))
+)
+
+result_backend = "redis://{}:{}/{}".format(
+	os.getenv("CELERY_RESULT_BACKEND", "opv_master"),
+	int(os.getenv("CELERY_RESULT_PORT", 6379)),
+	int(os.getenv("CELERY_RESULT_DB", 1))
+)
 
 task_serializer = 'json'
 result_serializer = 'json'

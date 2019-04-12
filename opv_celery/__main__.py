@@ -31,7 +31,10 @@ from opv_celery.tasks import make_all
 
 def get_campagain_by_id(campaign_id, id_malette):
     # Get all the campaigns
-    db_client = RestClient("http://OPV_Master:5000")
+    db_client = RestClient("http://%s:%s" % (
+       str(os.getenv("OPV_TASKS_DBREST_ADDRESS", "opv_master")),
+       str(os.getenv("OPV_TASKS_DBREST_PORT", 5000))
+    )
     # campaigns = db_client.make_all(Campaign)
     campaigns = db_client.make(Campaign, campaign_id, id_malette)
 
@@ -44,18 +47,22 @@ def launchAllOPVTask(data):
     # Get the address to Directory Manager
     # Variable.setdefault("OPV-DM", "http://OPV_Master:5005")
     # opv_dm = Variable.get("OPV-DM")
-    opv_dm = "http://OPV_Master:5005"
+    opv_dm = "http://%s:%s" % (
+        str(os.getenv("OPV_TASKS_DIRMANAGER_ADDRESS", "opv_master")),
+        str(os.getenv("OPV_TASKS_DIRMANAGER_PORT", 5005))
+    )
 
     # Get the address to DB rest API
     # Variable.setdefault("OPV-API", "http://OPV_Master:5000")
     # opv_api = Variable.get("OPV-API")
-    opv_api = "http://OPV_Master:5000"
-
     dir_manager_client = DirectoryManagerClient(
         api_base=opv_dm, default_protocol=Protocol.FTP
     )
 
-    db_client = RestClient(opv_api)
+    db_client = RestClient("http://%s:%s" % (
+       str(os.getenv("OPV_TASKS_DBREST_ADDRESS", "opv_master")),
+       str(os.getenv("OPV_TASKS_DBREST_PORT", 5000))
+    ) 
 
     try:
         run(dir_manager_client, db_client, "makeall", options)
@@ -71,7 +78,11 @@ def getStitchableCps(lot):
     return [cp for cp in lot.cps if cp.stichable]
 
 def found_no_make_lot(lots):
-    db_client = RestClient("http://OPV_Master:5000")
+    db_client = RestClient("http://%s:%s" % (
+       str(os.getenv("OPV_TASKS_DBREST_ADDRESS", "opv_master")),
+       str(os.getenv("OPV_TASKS_DBREST_PORT", 5000))
+    )
+
 
     lot_to_make = []
 

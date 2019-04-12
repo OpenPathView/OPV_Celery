@@ -1,0 +1,17 @@
+version: '2'
+services:
+
+  redis:
+    image: redis
+
+  celery:
+    build: .
+    depends_on:
+      - redis
+
+  flower:
+    image: opv-flower
+    depends_on:
+      - redis
+    ports:
+      - "5555:5555"

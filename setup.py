@@ -29,7 +29,8 @@ setup(
     description="Open Path View Tasks",
     long_description="",
     install_requires=[
-        "celery"
+        "celery",
+        "redis"
     ],
     # Active la prise en compte du fichier MANIFEST.in
     include_package_data=True,
