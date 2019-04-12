@@ -9,8 +9,7 @@ COPY . /source/OPV_Tasks
 
 WORKDIR /source/OPV_Tasks
 
-RUN pip3 install -r requirements.txt && \
-python3 setup.py install
+RUN pip3 install -r requirements.txt && python3 setup.py install
 
 CMD ["/bin/bash", "-c", "/usr/local/bin/celery worker -A opv_celery.tasks.app --concurrency=${CELERY_CONCURRENCY} -b ${CELERY_BROKER} --result-backend=${CELERY_RESULT_BACKEND}"] 
 
