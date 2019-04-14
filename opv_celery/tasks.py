@@ -120,12 +120,18 @@ def make_all(options):
     # Get the address to Directory Manager
     # Variable.setdefault("OPV-DM", "http://OPV_Master:5005")
     # opv_dm = Variable.get("OPV-DM")
-    opv_dm = "http://OPV_Master:5005"
+    opv_dm = "http://%s:%s" % (
+        str(os.getenv("OPV_TASKS_DIRMANAGER_ADDRESS", "opv_master")),
+        str(os.getenv("OPV_TASKS_DIRMANAGER_PORT", 5005))
+    )
 
     # Get the address to DB rest API
     # Variable.setdefault("OPV-API", "http://OPV_Master:5000")
     # opv_api = Variable.get("OPV-API")
-    opv_api = "http://OPV_Master:5000"
+    opv_api = "http://%s:%s" % (
+       str(os.getenv("OPV_TASKS_DBREST_ADDRESS", "opv_master")),
+       str(os.getenv("OPV_TASKS_DBREST_PORT", 5000))
+    )
 
     dir_manager_client = DirectoryManagerClient(
         api_base=opv_dm, default_protocol=Protocol.FTP
