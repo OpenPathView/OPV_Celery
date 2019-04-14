@@ -34,7 +34,7 @@ def get_campagain_by_id(campaign_id, id_malette):
     db_client = RestClient("http://%s:%s" % (
        str(os.getenv("OPV_TASKS_DBREST_ADDRESS", "opv_master")),
        str(os.getenv("OPV_TASKS_DBREST_PORT", 5000))
-    )
+    ))
     # campaigns = db_client.make_all(Campaign)
     campaigns = db_client.make(Campaign, campaign_id, id_malette)
 
@@ -62,7 +62,7 @@ def launchAllOPVTask(data):
     db_client = RestClient("http://%s:%s" % (
        str(os.getenv("OPV_TASKS_DBREST_ADDRESS", "opv_master")),
        str(os.getenv("OPV_TASKS_DBREST_PORT", 5000))
-    ) 
+    )) 
 
     try:
         run(dir_manager_client, db_client, "makeall", options)
@@ -81,7 +81,7 @@ def found_no_make_lot(lots):
     db_client = RestClient("http://%s:%s" % (
        str(os.getenv("OPV_TASKS_DBREST_ADDRESS", "opv_master")),
        str(os.getenv("OPV_TASKS_DBREST_PORT", 5000))
-    )
+    ))
 
 
     lot_to_make = []
