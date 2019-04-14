@@ -19,6 +19,7 @@
 # Todo:
 #  * Allow to launch make campaign with the id not only the name
 
+import os
 import sys
 import json
 from opv_api_client import RestClient
