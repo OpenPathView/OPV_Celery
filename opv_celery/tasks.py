@@ -115,8 +115,8 @@ def this_is_a_test(ok):
 @app.task()
 def make_all(options):
 
-    logger_class = MyLittleLogger("make_all_%s_%s" % (options["id_lot"], options["id_malette"]))
-
+    #logger_class = MyLittleLogger("make_all_%s_%s" % (options["id_lot"], options["id_malette"]))
+    logger = logging.getLogger("make_all")
     # Get the address to Directory Manager
     # Variable.setdefault("OPV-DM", "http://OPV_Master:5005")
     # opv_dm = Variable.get("OPV-DM")
@@ -140,13 +140,12 @@ def make_all(options):
     db_client = RestClient(opv_api)
 
     try:
-        run(dir_manager_client, db_client, "makeall", options, logger_class.logger)
-        logger_class.remove()
+        run(dir_manager_client, db_client, "makeall", options, logger)
         return "Success lot=%s malette=%s" % (options["id_lot"], options["id_malette"])
     except Exception as e:
         msg = "Error lot=%s malette=%s msg='%s'" % (options["id_lot"], options["id_malette"], str(e))
-        logger_class.logger.error(msg)
-        raise MyException("Error %s" % logger_class.url)
+        logger.error(msg)
+        raise e
 
 
 if __name__ == "__main__":
